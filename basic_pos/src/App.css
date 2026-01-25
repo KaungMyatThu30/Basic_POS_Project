@@ -256,7 +256,6 @@ h1 {
   font-weight: 500;
 }
 
-/* Progress List */
 .category-list {
   display: flex;
   flex-direction: column;
@@ -289,7 +288,6 @@ h1 {
   border-radius: 99px;
 }
 
-/* --- Forms (Sales Journal) --- */
 .form-grid {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr auto;

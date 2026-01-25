@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
- 
+
 const Sidebar = () => (
   <aside className="sidebar">
     <div className="brand">
@@ -11,9 +11,9 @@ const Sidebar = () => (
       >
         <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
       </svg>
-      Nexus POS
+      POS
     </div>
- 
+
     <nav className="nav-menu">
       <NavLink
         to="/"
@@ -29,7 +29,7 @@ const Sidebar = () => (
         </svg>
         Overview
       </NavLink>
- 
+
       <NavLink
         to="/journal"
         className={({ isActive }) =>
@@ -48,5 +48,5 @@ const Sidebar = () => (
     </nav>
   </aside>
 );
- 
+
 export default Sidebar;
