@@ -1,20 +1,20 @@
 import React, { useState } from "react";
 import productData from "../product-item.json";
- 
+
 const SalesJournal = ({ transactions, onAddTransaction }) => {
   const [selectedProduct, setSelectedProduct] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
- 
+
   const currentProduct = productData.find(
     (p) => p.itemName === selectedProduct
   );
   const total = currentProduct ? currentProduct.unitPrice * quantity : 0;
- 
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!currentProduct || quantity <= 0) return;
- 
+
     const newTransaction = {
       id: Date.now(),
       date,
@@ -24,19 +24,19 @@ const SalesJournal = ({ transactions, onAddTransaction }) => {
       quantity: parseInt(quantity),
       totalPrice: total,
     };
- 
+
     onAddTransaction(newTransaction);
     setQuantity(1);
     setSelectedProduct("");
   };
- 
+
   return (
     <div className="animate-fade-in">
       <header className="page-header">
         <h1>Sales Journal</h1>
         <p className="subtitle">Enter new transactions below.</p>
       </header>
- 
+
       <div className="card" style={{ marginBottom: "2rem" }}>
         <form onSubmit={handleSubmit}>
           <div className="form-grid">
@@ -56,7 +56,7 @@ const SalesJournal = ({ transactions, onAddTransaction }) => {
                 ))}
               </select>
             </div>
- 
+
             <div>
               <label className="input-label">Quantity</label>
               <input
@@ -68,7 +68,7 @@ const SalesJournal = ({ transactions, onAddTransaction }) => {
                 className="modern-input"
               />
             </div>
- 
+
             <div>
               <label className="input-label">Date</label>
               <input
@@ -79,7 +79,7 @@ const SalesJournal = ({ transactions, onAddTransaction }) => {
                 className="modern-input"
               />
             </div>
- 
+
             <button type="submit" className="btn-primary">
               <svg className="svg-icon" viewBox="0 0 24 24">
                 <path d="M12 5v14M5 12h14" />
@@ -102,9 +102,9 @@ const SalesJournal = ({ transactions, onAddTransaction }) => {
           )}
         </form>
       </div>
- 
+
       <div className="card">
-        <h3 style={{ marginBottom: "1rem" }}>Recent Transactions</h3>
+        <h3 style={{ marginBottom: "1rem" }}>Transactions</h3>
         <div className="table-wrapper">
           <table className="modern-table">
             <thead>
@@ -151,7 +151,5 @@ const SalesJournal = ({ transactions, onAddTransaction }) => {
     </div>
   );
 };
- 
+
 export default SalesJournal;
- 
- 
