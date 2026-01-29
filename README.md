@@ -97,7 +97,7 @@ Preview build:
 
 npm run preview
 
-📦 Data Configuration
+Data Configuration
 Product Catalog File (pos_item.json)
 
 Place your JSON file here:
