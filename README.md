@@ -8,13 +8,13 @@
 
 ## Screenshots
 
-Dashboard Screenshot
+### Dashboard Screenshot
 
 ![Dashboard Screenshot](images/dashboard1.png)
 ![Dashboard Screenshot](images/dashboard2.png)
 
 
-Sale Journal Screenshot
+### Sale Journal Screenshot
 ![SaleJournal Screenshot](images/salejournal1.png)
 ![SaleJournal Screenshot](images/salejournal2.png)
 ![SaleJournal Screenshot](images/salejournal3.png)
