@@ -392,7 +392,7 @@ const Dashboard = ({ transactions = [] }) => {
  
       {/* Top Products Table */}
       <div className="card">
-        <h3>Top Selling Products ({filter})</h3>
+        <h3>Top 5 Selling Products ({filter})</h3>
         <div className="table-wrapper">
           <table className="modern-table">
             <thead>

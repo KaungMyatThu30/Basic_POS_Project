@@ -1,79 +1,135 @@
-import React, { useState } from "react";
-import productData from "../product-item.json";
+import React, { useMemo, useState } from "react";
+import productData from "../data/pos_item.json";
 
-const SalesJournal = ({ transactions, onAddTransaction }) => {
+const PRODUCT_STORE_KEY = "pos_products_runtime"; 
+
+const SalesJournal = ({ transactions = [], onAddTransaction }) => {
   const [isCustom, setIsCustom] = useState(false);
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [quantity, setQuantity] = useState(1);
-
   const [selectedProduct, setSelectedProduct] = useState("");
 
   const [customName, setCustomName] = useState("");
   const [customCategory, setCustomCategory] = useState("");
   const [customPrice, setCustomPrice] = useState("");
 
+ 
+  
+  const [products, setProducts] = useState(() => {
+    const saved = localStorage.getItem(PRODUCT_STORE_KEY);
+    return saved ? JSON.parse(saved) : productData;
+  });
+
+
+  const allProducts = useMemo(() => products, [products]);
+
   const getPreviewTotal = () => {
-    if (isCustom) {
-      return (parseFloat(customPrice) || 0) * quantity;
-    } else {
-      const prod = productData.find((p) => p.itemName === selectedProduct);
-      return prod ? prod.unitPrice * quantity : 0;
-    }
+    const qty = Number(quantity) || 0;
+
+    if (isCustom) return (Number(customPrice) || 0) * qty;
+
+    const prod = allProducts.find((p) => p.itemName === selectedProduct);
+    return prod ? Number(prod.unitPrice || 0) * qty : 0;
+  };
+
+  const saveProducts = (updated) => {
+    setProducts(updated);
+    localStorage.setItem(PRODUCT_STORE_KEY, JSON.stringify(updated));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    let newItem = {};
+    const qty = Number(quantity);
+    if (!qty || qty <= 0) {
+      alert("Quantity must be greater than 0");
+      return;
+    }
+
 
     if (isCustom) {
       if (!customName || !customCategory || !customPrice) {
         alert("Please fill in all custom fields");
         return;
       }
-      newItem = {
-        itemName: customName,
-        category: customCategory,
-        unitPrice: parseFloat(customPrice),
-      };
-    } else {
-      const prod = productData.find((p) => p.itemName === selectedProduct);
-      if (!prod) {
-        alert("Please select a product");
+
+      const priceNum = Number(customPrice);
+      if (!priceNum || priceNum <= 0) {
+        alert("Unit Price must be greater than 0");
         return;
       }
-      newItem = {
-        itemName: prod.itemName,
-        category: prod.category,
-        unitPrice: prod.unitPrice,
+
+      const newExtraItem = {
+        itemName: customName.trim(),
+        category: customCategory.trim(),
+        description: "Extra spending item",
+        unitPrice: priceNum,
+        inventory: 50,
       };
-    }
 
-    if (quantity <= 0) {
-      alert("Quantity must be greater than 0");
-      return;
-    }
+      const exists = allProducts.some(
+        (p) => p.itemName.toLowerCase() === newExtraItem.itemName.toLowerCase()
+      );
+      if (exists) {
+        alert("This item name already exists. Please use a different name.");
+        return;
+      }
 
-    const newTransaction = {
-      id: Date.now(),
-      date,
-      itemName: newItem.itemName,
-      category: newItem.category,
-      unitPrice: newItem.unitPrice,
-      quantity: parseInt(quantity),
-      totalPrice: newItem.unitPrice * parseInt(quantity),
-    };
+      const updatedProducts = [...allProducts, newExtraItem];
+      saveProducts(updatedProducts);
 
-    onAddTransaction(newTransaction);
 
-    setQuantity(1);
-    if (isCustom) {
+      setQuantity(1);
       setCustomName("");
       setCustomCategory("");
       setCustomPrice("");
-    } else {
-      setSelectedProduct("");
+      setIsCustom(false);
+
+      alert("Saved to POS Items list. No transaction recorded.");
+      return;
     }
+
+
+    const productIndex = allProducts.findIndex(
+      (p) => p.itemName === selectedProduct
+    );
+    if (productIndex === -1) {
+      alert("Please select a product");
+      return;
+    }
+
+    const prod = allProducts[productIndex];
+    const currentStock = Number(prod.inventory ?? 0);
+
+    if (qty > currentStock) {
+      alert(`Not enough stock. Available: ${currentStock}`);
+      return;
+    }
+
+
+    const updatedProducts = [...allProducts];
+    updatedProducts[productIndex] = {
+      ...prod,
+      inventory: currentStock - qty,
+    };
+    saveProducts(updatedProducts);
+
+
+    const unitPrice = Number(prod.unitPrice || 0);
+    const newTransaction = {
+      date,
+      itemName: prod.itemName,
+      category: prod.category,
+      unitPrice,
+      quantity: qty,
+      totalPrice: unitPrice * qty,
+    };
+
+    onAddTransaction?.(newTransaction);
+
+
+    setQuantity(1);
+    setSelectedProduct("");
   };
 
   return (
@@ -88,7 +144,7 @@ const SalesJournal = ({ transactions, onAddTransaction }) => {
             <button
               onClick={(e) => {
                 e.preventDefault();
-                setIsCustom(!isCustom);
+                setIsCustom((prev) => !prev);
               }}
               style={{
                 backgroundColor: "#111827",
@@ -102,28 +158,8 @@ const SalesJournal = ({ transactions, onAddTransaction }) => {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "10px",
-                transition: "opacity 0.2s",
               }}
             >
-              {isCustom ? (
-                <svg
-                  className="svg-icon"
-                  viewBox="0 0 24 24"
-                  style={{ stroke: "white" }}
-                >
-                  <path d="M19 12H5" />
-                  <path d="M12 19l-7-7 7-7" />
-                </svg>
-              ) : (
-                <svg
-                  className="svg-icon"
-                  viewBox="0 0 24 24"
-                  style={{ stroke: "white" }}
-                >
-                  <path d="M12 5v14M5 12h14" />
-                </svg>
-              )}
-
               {isCustom ? "Back to Product List" : "Extra Spending Category"}
             </button>
           </div>
@@ -135,34 +171,33 @@ const SalesJournal = ({ transactions, onAddTransaction }) => {
                   <label className="input-label">Item Name</label>
                   <input
                     type="text"
-                    placeholder="e.g. Special Delivery"
                     value={customName}
                     onChange={(e) => setCustomName(e.target.value)}
-                    required={isCustom}
+                    required
                     className="modern-input"
                   />
                 </div>
+
                 <div>
                   <label className="input-label">Category</label>
                   <input
                     type="text"
-                    placeholder="e.g. Service"
                     value={customCategory}
                     onChange={(e) => setCustomCategory(e.target.value)}
-                    required={isCustom}
+                    required
                     className="modern-input"
                   />
                 </div>
+
                 <div>
                   <label className="input-label">Unit Price ($)</label>
                   <input
                     type="number"
                     min="0"
                     step="0.01"
-                    placeholder="0.00"
                     value={customPrice}
                     onChange={(e) => setCustomPrice(e.target.value)}
-                    required={isCustom}
+                    required
                     className="modern-input"
                   />
                 </div>
@@ -173,13 +208,18 @@ const SalesJournal = ({ transactions, onAddTransaction }) => {
                 <select
                   value={selectedProduct}
                   onChange={(e) => setSelectedProduct(e.target.value)}
-                  required={!isCustom}
+                  required
                   className="modern-input"
                 >
-                  <option value="">-- Choose Item --</option>
-                  {productData.map((p, idx) => (
-                    <option key={idx} value={p.itemName}>
-                      {p.itemName} ({p.category}) - ${p.unitPrice}
+                  <option value="">Choose Item</option>
+                  {allProducts.map((p, idx) => (
+                    <option
+                      key={`${p.itemName}-${idx}`}
+                      value={p.itemName}
+                      disabled={Number(p.inventory || 0) <= 0}
+                    >
+                      {p.itemName} ({p.category}) - ${p.unitPrice} | Stock:{" "}
+                      {p.inventory}
                     </option>
                   ))}
                 </select>
@@ -192,7 +232,7 @@ const SalesJournal = ({ transactions, onAddTransaction }) => {
                 type="number"
                 min="1"
                 value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
+                onChange={(e) => setQuantity(Number(e.target.value))}
                 required
                 className="modern-input"
               />
@@ -214,10 +254,7 @@ const SalesJournal = ({ transactions, onAddTransaction }) => {
               className="btn-primary"
               style={{ height: "46px", marginTop: "auto" }}
             >
-              <svg className="svg-icon" viewBox="0 0 24 24">
-                <path d="M12 5v14M5 12h14" />
-              </svg>
-              Record Sale
+              {isCustom ? "Save Item" : "Record Sale"}
             </button>
           </div>
 
@@ -248,12 +285,13 @@ const SalesJournal = ({ transactions, onAddTransaction }) => {
                 <th style={{ textAlign: "right" }}>Total</th>
               </tr>
             </thead>
+
             <tbody>
               {transactions
                 .slice()
                 .reverse()
-                .map((t) => (
-                  <tr key={t.id}>
+                .map((t, idx) => (
+                  <tr key={t.id ?? `${t.date}-${t.itemName}-${idx}`}>
                     <td style={{ color: "#64748b" }}>{t.date}</td>
                     <td style={{ fontWeight: 500 }}>{t.itemName}</td>
                     <td>
@@ -261,10 +299,11 @@ const SalesJournal = ({ transactions, onAddTransaction }) => {
                     </td>
                     <td>{t.quantity}</td>
                     <td style={{ textAlign: "right", fontWeight: 700 }}>
-                      ${t.totalPrice.toLocaleString()}
+                      ${Number(t.totalPrice || 0).toLocaleString()}
                     </td>
                   </tr>
                 ))}
+
               {transactions.length === 0 && (
                 <tr>
                   <td
