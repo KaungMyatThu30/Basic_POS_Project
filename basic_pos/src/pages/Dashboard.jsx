@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+ 
 
 const CustomLineChart = ({ data }) => {
   if (!data || data.length === 0)
@@ -15,27 +16,27 @@ const CustomLineChart = ({ data }) => {
         No data for this period
       </div>
     );
-
+ 
   const isSinglePoint = data.length === 1;
   const height = 250;
   const width = 800;
   const paddingX = 50;
   const paddingY = 30;
-
+ 
   const maxY = Math.max(...data.map((d) => d.value), 10) * 1.2;
-
+ 
   const getX = (index) =>
     (index / (data.length - 1 || 1)) * (width - paddingX * 2) + paddingX;
   const getY = (value) =>
     height - paddingY - (value / maxY) * (height - paddingY * 2);
-
+ 
   const points = data.map((d, i) => `${getX(i)},${getY(d.value)}`).join(" ");
-
+ 
   const gridLines = [0, 0.25, 0.5, 0.75, 1].map((pct) => ({
     y: height - paddingY - pct * (height - paddingY * 2),
     label: Math.round(pct * maxY),
   }));
-
+ 
   return (
     <div style={{ width: "100%", overflow: "hidden" }}>
       <svg
@@ -64,7 +65,6 @@ const CustomLineChart = ({ data }) => {
             </text>
           </g>
         ))}
-
         {!isSinglePoint && (
           <polyline
             fill="none"
@@ -75,7 +75,6 @@ const CustomLineChart = ({ data }) => {
             strokeLinejoin="round"
           />
         )}
-
         {data.map((d, i) => (
           <g key={i}>
             <circle
@@ -108,6 +107,7 @@ const CustomLineChart = ({ data }) => {
     </div>
   );
 };
+ 
 
 const CustomDoughnut = ({ data, colors }) => {
   if (!data || data.length === 0)
@@ -124,23 +124,20 @@ const CustomDoughnut = ({ data, colors }) => {
         No data for this period
       </div>
     );
-
+ 
   const total = data.reduce((sum, item) => sum + item.value, 0);
-
+  let currentAngle = 0;
+ 
   const gradient = data
-    .reduce(
-      (acc, item, index) => {
-        const pct = (item.value / total) * 100;
-        const currentAngle = (acc.angle || 0) + pct;
-        const color = colors[index % colors.length];
-        acc.stops.push(`${color} 0 ${currentAngle}%`);
-        acc.angle = currentAngle;
-        return acc;
-      },
-      { stops: [], angle: 0 }
-    )
-    .stops.join(", ");
-
+    .map((item, index) => {
+      const pct = (item.value / total) * 100;
+      const start = currentAngle;
+      currentAngle += pct;
+      const color = colors[index % colors.length];
+      return `${color} 0 ${currentAngle}%`;
+    })
+    .join(", ");
+ 
   return (
     <div
       style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
@@ -201,63 +198,72 @@ const CustomDoughnut = ({ data, colors }) => {
     </div>
   );
 };
+ 
 
 const Dashboard = ({ transactions = [] }) => {
   const [filter, setFilter] = useState("daily");
-
+ 
   const stats = useMemo(() => {
     const safeTransactions = transactions || [];
+ 
 
+    const getMidnight = (d) => {
+      const date = new Date(d);
+      date.setHours(0, 0, 0, 0);
+      return date.getTime(); 
+    };
+ 
     const now = new Date();
-    const todayStr = now.toLocaleDateString("en-CA");
-
+    const todayTime = getMidnight(now);
+ 
     const filteredTransactions = safeTransactions.filter((t) => {
-      if (filter === "Daily") return t.date === todayStr;
+      const txTime = getMidnight(t.date);
+ 
+      if (filter === "daily") {
 
-      if (filter === "Weekly") {
-        const txDate = new Date(t.date);
-        const todayDate = new Date(todayStr);
-        const diffTime = Math.abs(todayDate - txDate);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        return diffDays <= 7 && txDate <= todayDate;
+        return txTime === todayTime;
       }
+ 
+      if (filter === "weekly") {
 
-      if (filter === "Monthly")
-        return t.date.slice(0, 7) === todayStr.slice(0, 7);
+        const oneWeekAgo = todayTime - 7 * 24 * 60 * 60 * 1000;
+        return txTime >= oneWeekAgo && txTime <= todayTime;
+      }
+ 
+      if (filter === "monthly") {
 
-      return true;
+        const txDate = new Date(t.date);
+        const todayDate = new Date();
+        return (
+          txDate.getMonth() === todayDate.getMonth() &&
+          txDate.getFullYear() === todayDate.getFullYear()
+        );
+      }
+ 
+      return true; 
     });
+ 
 
-    let lineChartData = [];
-
-    if (filter === "daily") {
-      lineChartData = filteredTransactions.map((t) => {
-        const timeLabel = new Date(t.id).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        });
-        return { label: timeLabel, value: t.totalPrice };
-      });
-    } else {
-      const salesByDate = filteredTransactions.reduce((acc, t) => {
-        acc[t.date] = (acc[t.date] || 0) + t.totalPrice;
-        return acc;
-      }, {});
-      lineChartData = Object.keys(salesByDate)
-        .sort()
-        .map((date) => ({ label: date, value: salesByDate[date] }));
-    }
-
+    const salesByDate = filteredTransactions.reduce((acc, t) => {
+      acc[t.date] = (acc[t.date] || 0) + t.totalPrice;
+      return acc;
+    }, {});
+ 
+    const lineChartData = Object.keys(salesByDate)
+      .sort()
+      .map((date) => ({ label: date, value: salesByDate[date] }));
+ 
+ 
     const totalSales = filteredTransactions.reduce(
       (sum, t) => sum + t.totalPrice,
       0
     );
-
+ 
     const totalProducts = filteredTransactions.reduce(
       (sum, t) => sum + t.quantity,
       0
     );
-
+ 
     const salesByCategory = filteredTransactions.reduce((acc, t) => {
       acc[t.category] = (acc[t.category] || 0) + t.totalPrice;
       return acc;
@@ -266,7 +272,7 @@ const Dashboard = ({ transactions = [] }) => {
       name: cat,
       value: salesByCategory[cat],
     }));
-
+ 
     const salesByProduct = filteredTransactions.reduce((acc, t) => {
       acc[t.itemName] = (acc[t.itemName] || 0) + t.quantity;
       return acc;
@@ -275,7 +281,7 @@ const Dashboard = ({ transactions = [] }) => {
       .sort(([, a], [, b]) => b - a)
       .slice(0, 5)
       .map(([name, qty]) => ({ name, qty }));
-
+ 
     return {
       totalSales,
       totalProducts,
@@ -284,9 +290,9 @@ const Dashboard = ({ transactions = [] }) => {
       topProducts,
     };
   }, [transactions, filter]);
-
+ 
   const CATEGORY_COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#8b5cf6"];
-
+ 
   return (
     <div className="animate-fade-in">
       <header
@@ -300,7 +306,8 @@ const Dashboard = ({ transactions = [] }) => {
         <div>
           <h1>Dashboard</h1>
         </div>
-
+ 
+        {/* Filter Buttons */}
         <div
           style={{
             display: "flex",
@@ -335,7 +342,8 @@ const Dashboard = ({ transactions = [] }) => {
           ))}
         </div>
       </header>
-
+ 
+      {/* KPI Stats Grid */}
       <div className="stats-grid">
         <div className="stat-card">
           <div className="icon-box blue">
@@ -367,15 +375,12 @@ const Dashboard = ({ transactions = [] }) => {
           </div>
         </div>
       </div>
-
+ 
+      {/* Main Charts Area */}
       <div className="charts-grid">
         <div className="card">
           <h3>
-            {filter === "Daily"
-              ? "Daily's Hourly Trends"
-              : `${
-                  filter.charAt(0).toUpperCase() + filter.slice(1)
-                } Sales Trends`}
+            {filter.charAt(0).toUpperCase() + filter.slice(1)} Sales Trends
           </h3>
           <CustomLineChart data={stats.lineChartData} />
         </div>
@@ -384,7 +389,8 @@ const Dashboard = ({ transactions = [] }) => {
           <CustomDoughnut data={stats.pieChartData} colors={CATEGORY_COLORS} />
         </div>
       </div>
-
+ 
+      {/* Top Products Table */}
       <div className="card">
         <h3>Top Selling Products ({filter})</h3>
         <div className="table-wrapper">
@@ -431,5 +437,7 @@ const Dashboard = ({ transactions = [] }) => {
     </div>
   );
 };
-
+ 
 export default Dashboard;
+ 
+ 
