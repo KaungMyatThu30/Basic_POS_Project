@@ -11,7 +11,7 @@
 Dashboard Screenshot
 
 ![Dashboard Screenshot](images/dashboard1.png)
-<img src="images/dashboard2.png.png" width="800" />
+![Dashboard Screenshot](images/dashboard2.png)
 
 
 Sale Journal Screenshot
