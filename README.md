@@ -10,8 +10,9 @@
 
 Dashboard Screenshot
 
-![Dashboard Screenshot](images/dashboard1.jpg)
-![Dashboard Screenshot](images/dashboard2.jpg)
+![Dashboard Screenshot](images/dashboard1.png)
+<img src="images/dashboard2.png.png" width="800" />
+
 
 Sale Journal Screenshot
 ![SaleJournal Screenshot](images/salejournal1.png)
