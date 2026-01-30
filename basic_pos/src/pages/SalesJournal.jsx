@@ -229,7 +229,7 @@ const SalesJournal = ({
                       value={p.itemName}
                       disabled={Number(p.inventory || 0) <= 0}
                     >
-                      {p.itemName} ({p.category}) - ฿{p.unitPrice} | Stock:{" "}
+                      {p.itemName} ({p.category})| Stock:{" "}
                       {p.inventory}
                     </option>
                   ))}
