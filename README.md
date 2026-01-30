@@ -54,6 +54,8 @@ Sales Journal is used to record sales and update inventory in real-time:
 ![SaleJournal Screenshot](images/salejournal4.png)
 
 ---
+## Deploy Link
+https://lynn198456.github.io/basic_pos_deploy/
 
 ## Technology Stack
 
