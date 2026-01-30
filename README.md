@@ -51,11 +51,12 @@ Sales Journal is used to record sales and update inventory in real-time:
 ![SaleJournal Screenshot](images/salejournal1.png)
 ![SaleJournal Screenshot](images/salejournal2.png)
 ![SaleJournal Screenshot](images/salejournal3.png)
-![SaleJournal Screenshot](images/salejournal4.png)
 
 ---
 ## Deploy Link
-https://lynn198456.github.io/basic_pos_deploy/
+https://thantsinwin8917.github.io/Basic_POS_Deploy/
+basic_pos
+ 
 
 ## Technology Stack
 
@@ -137,7 +138,6 @@ BASIC_POS_PROJECT
 |   │   │   └── Sidebar.jsx
 |   │   ├── data/
 |   │   │   └── pos_item.json
-|   |   ├── hooks/
 |   |   └── useTransactions.js
 |   │   ├── pages/
 |   │   │   ├── Dashboard.jsx
