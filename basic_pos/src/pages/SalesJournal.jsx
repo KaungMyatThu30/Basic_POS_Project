@@ -64,7 +64,8 @@ const SalesJournal = ({ transactions = [], onAddTransaction }) => {
         category: customCategory.trim(),
         description: "Extra spending item",
         unitPrice: priceNum,
-        inventory: 50,
+        inventory: qty,
+
       };
 
       const exists = allProducts.some(
