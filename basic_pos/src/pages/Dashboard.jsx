@@ -241,6 +241,7 @@ const Dashboard = ({ transactions = [] }) => {
   const [endDate, setEndDate] = useState("");
   useEffect(() => {
     const today = formatDateISO(toMidnight(new Date()));
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSingleDay(today);
     setWeekAnchor(today);
     setMonthAnchor(`${new Date().getFullYear()}-${pad2(new Date().getMonth() + 1)}`);
@@ -251,6 +252,7 @@ const Dashboard = ({ transactions = [] }) => {
     if (filter === "daily") {
       const d = safeISO(singleDay) || toMidnight(new Date());
       const iso = formatDateISO(d);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setStartDate(iso);
       setEndDate(iso);
     }
@@ -446,18 +448,6 @@ const Dashboard = ({ transactions = [] }) => {
             </div>
           </div>
 
-          <div className="segment">
-            {["daily", "weekly", "monthly"].map((period) => (
-              <button
-                key={period}
-                type="button"
-                onClick={() => setFilter(period)}
-                className={`segment-btn ${filter === period ? "active" : ""}`}
-              >
-                {period}
-              </button>
-            ))}
-          </div>
         </div>
       </header>
 

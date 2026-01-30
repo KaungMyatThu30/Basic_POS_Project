@@ -183,7 +183,7 @@ const SalesJournal = ({
                     onChange={(e) => setCustomName(e.target.value)}
                     required
                     className="modern-input"
-                    placeholder="e.g. Delivery Fee"
+                    placeholder=""
                   />
                 </div>
 
