@@ -7,7 +7,7 @@ This project helps store owners record sales, manage inventory, and view sales a
 ---
 ## Team Members
 
-1. Kaung Myat Thu -u6712065@au.edu -KaungMyatThu30 Kaung Myat Thu
+1. Kaung Myat Thu -u6712065@au.edu -KaungMyatThu30
 2. Thant Sin Win  -u6712095@au.edu -thantsinwin8917
 3. Htin Aung Lynn -u6726116@au.edu -Lynn198456
 ---
