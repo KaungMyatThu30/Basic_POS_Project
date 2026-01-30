@@ -1,9 +1,14 @@
 import React, { useMemo, useState } from "react";
 import productData from "../data/pos_item.json";
 
-const PRODUCT_STORE_KEY = "pos_products_runtime"; 
+const PRODUCT_STORE_KEY = "pos_products_runtime";
 
-const SalesJournal = ({ transactions = [], onAddTransaction }) => {
+const SalesJournal = ({
+  transactions = [],
+  onAddTransaction,
+  onDeleteTransaction,
+  onClearTransactions,
+}) => {
   const [isCustom, setIsCustom] = useState(false);
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [quantity, setQuantity] = useState(1);
@@ -13,15 +18,17 @@ const SalesJournal = ({ transactions = [], onAddTransaction }) => {
   const [customCategory, setCustomCategory] = useState("");
   const [customPrice, setCustomPrice] = useState("");
 
- 
-  
   const [products, setProducts] = useState(() => {
     const saved = localStorage.getItem(PRODUCT_STORE_KEY);
     return saved ? JSON.parse(saved) : productData;
   });
 
-
   const allProducts = useMemo(() => products, [products]);
+
+  const saveProducts = (updated) => {
+    setProducts(updated);
+    localStorage.setItem(PRODUCT_STORE_KEY, JSON.stringify(updated));
+  };
 
   const getPreviewTotal = () => {
     const qty = Number(quantity) || 0;
@@ -32,11 +39,6 @@ const SalesJournal = ({ transactions = [], onAddTransaction }) => {
     return prod ? Number(prod.unitPrice || 0) * qty : 0;
   };
 
-  const saveProducts = (updated) => {
-    setProducts(updated);
-    localStorage.setItem(PRODUCT_STORE_KEY, JSON.stringify(updated));
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
 
@@ -45,7 +47,6 @@ const SalesJournal = ({ transactions = [], onAddTransaction }) => {
       alert("Quantity must be greater than 0");
       return;
     }
-
 
     if (isCustom) {
       if (!customName || !customCategory || !customPrice) {
@@ -64,8 +65,7 @@ const SalesJournal = ({ transactions = [], onAddTransaction }) => {
         category: customCategory.trim(),
         description: "Extra spending item",
         unitPrice: priceNum,
-        inventory: qty,
-
+        inventory: qty, 
       };
 
       const exists = allProducts.some(
@@ -79,7 +79,6 @@ const SalesJournal = ({ transactions = [], onAddTransaction }) => {
       const updatedProducts = [...allProducts, newExtraItem];
       saveProducts(updatedProducts);
 
-
       setQuantity(1);
       setCustomName("");
       setCustomCategory("");
@@ -89,7 +88,6 @@ const SalesJournal = ({ transactions = [], onAddTransaction }) => {
       alert("Saved to POS Items list. No transaction recorded.");
       return;
     }
-
 
     const productIndex = allProducts.findIndex(
       (p) => p.itemName === selectedProduct
@@ -118,6 +116,7 @@ const SalesJournal = ({ transactions = [], onAddTransaction }) => {
 
     const unitPrice = Number(prod.unitPrice || 0);
     const newTransaction = {
+      id: Date.now(), 
       date,
       itemName: prod.itemName,
       category: prod.category,
@@ -128,9 +127,18 @@ const SalesJournal = ({ transactions = [], onAddTransaction }) => {
 
     onAddTransaction?.(newTransaction);
 
-
     setQuantity(1);
     setSelectedProduct("");
+  };
+
+  const handleDelete = (id) => {
+    onDeleteTransaction?.(id);
+  };
+
+  const handleClearAll = () => {
+    const ok = confirm("Clear all transactions?");
+    if (!ok) return;
+    onClearTransactions?.();
   };
 
   return (
@@ -138,7 +146,6 @@ const SalesJournal = ({ transactions = [], onAddTransaction }) => {
       <header className="page-header">
         <h1>Sales Journal</h1>
       </header>
-
       <div className="card" style={{ marginBottom: "2rem" }}>
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: "1.5rem" }}>
@@ -176,6 +183,7 @@ const SalesJournal = ({ transactions = [], onAddTransaction }) => {
                     onChange={(e) => setCustomName(e.target.value)}
                     required
                     className="modern-input"
+                    placeholder="e.g. Delivery Fee"
                   />
                 </div>
 
@@ -187,11 +195,12 @@ const SalesJournal = ({ transactions = [], onAddTransaction }) => {
                     onChange={(e) => setCustomCategory(e.target.value)}
                     required
                     className="modern-input"
+                    placeholder="e.g. Service"
                   />
                 </div>
 
                 <div>
-                  <label className="input-label">Unit Price ($)</label>
+                  <label className="input-label">Unit Price (฿)</label>
                   <input
                     type="number"
                     min="0"
@@ -200,6 +209,7 @@ const SalesJournal = ({ transactions = [], onAddTransaction }) => {
                     onChange={(e) => setCustomPrice(e.target.value)}
                     required
                     className="modern-input"
+                    placeholder="0.00"
                   />
                 </div>
               </>
@@ -219,7 +229,7 @@ const SalesJournal = ({ transactions = [], onAddTransaction }) => {
                       value={p.itemName}
                       disabled={Number(p.inventory || 0) <= 0}
                     >
-                      {p.itemName} ({p.category}) - ${p.unitPrice} | Stock:{" "}
+                      {p.itemName} ({p.category}) - ฿{p.unitPrice} | Stock:{" "}
                       {p.inventory}
                     </option>
                   ))}
@@ -268,13 +278,41 @@ const SalesJournal = ({ transactions = [], onAddTransaction }) => {
               color: "#4f46e5",
             }}
           >
-            Total: ${getPreviewTotal().toLocaleString()}
+            Total: ฿{getPreviewTotal().toLocaleString()}
           </div>
         </form>
       </div>
-
       <div className="card">
-        <h3>Transactions</h3>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "1rem",
+            gap: "12px",
+            flexWrap: "wrap",
+          }}
+        >
+          <h3 style={{ margin: 0 }}>Transactions</h3>
+
+          {transactions.length > 0 && (
+            <button
+              onClick={handleClearAll}
+              style={{
+                background: "#111827",
+                color: "white",
+                border: "none",
+                padding: "10px 14px",
+                borderRadius: "10px",
+                fontWeight: "700",
+                cursor: "pointer",
+              }}
+            >
+              Clear All
+            </button>
+          )}
+        </div>
+
         <div className="table-wrapper">
           <table className="modern-table">
             <thead>
@@ -284,6 +322,9 @@ const SalesJournal = ({ transactions = [], onAddTransaction }) => {
                 <th>Category</th>
                 <th>Qty</th>
                 <th style={{ textAlign: "right" }}>Total</th>
+                <th width="90" style={{ textAlign: "center" }}>
+                  Action
+                </th>
               </tr>
             </thead>
 
@@ -300,7 +341,25 @@ const SalesJournal = ({ transactions = [], onAddTransaction }) => {
                     </td>
                     <td>{t.quantity}</td>
                     <td style={{ textAlign: "right", fontWeight: 700 }}>
-                      ${Number(t.totalPrice || 0).toLocaleString()}
+                      ฿{Number(t.totalPrice || 0).toLocaleString()}
+                    </td>
+                    <td style={{ textAlign: "center" }}>
+                      <button
+                        onClick={() => handleDelete(t.id)}
+                        style={{
+                          background: "#ef4444",
+                          color: "white",
+                          border: "none",
+                          padding: "6px 10px",
+                          borderRadius: "8px",
+                          fontSize: "0.8rem",
+                          fontWeight: "700",
+                          cursor: "pointer",
+                        }}
+                        title="Delete this transaction"
+                      >
+                        Delete
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -308,7 +367,7 @@ const SalesJournal = ({ transactions = [], onAddTransaction }) => {
               {transactions.length === 0 && (
                 <tr>
                   <td
-                    colSpan="5"
+                    colSpan="6"
                     style={{
                       textAlign: "center",
                       padding: "2rem",

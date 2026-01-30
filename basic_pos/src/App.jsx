@@ -19,6 +19,15 @@ function App() {
     setTransactions((prev) => [...prev, transaction]);
   };
 
+  const handleDeleteTransaction = (id) => {
+    setTransactions((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  const handleClearTransactions = () => {
+    setTransactions([]);
+    localStorage.removeItem("pos_transactions");
+  };
+
   return (
     <BrowserRouter>
       <div className="layout">
@@ -35,7 +44,10 @@ function App() {
                 <SalesJournal
                   transactions={transactions}
                   onAddTransaction={handleAddTransaction}
+                  onDeleteTransaction={handleDeleteTransaction}
+                  onClearTransactions={handleClearTransactions}
                 />
+
               }
             />
           </Routes>
